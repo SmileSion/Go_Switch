@@ -1,11 +1,12 @@
 package config
 
 import (
-	"github.com/go-redis/redis/v8"
 	"context"
-	"github.com/BurntSushi/toml"
-	"log"
 	"database/sql"
+	"log"
+
+	"github.com/BurntSushi/toml"
+	"github.com/go-redis/redis/v8"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -18,7 +19,7 @@ type MysqlConfig struct {
 }
 
 type LogConfig struct {
-	Filepath string `toml:"filepath"`
+	Filepath   string `toml:"filepath"`
 	MaxSize    int    `toml:"max_size"`
 	MaxBackups int    `toml:"max_backups"`
 	MaxAge     int    `toml:"max_age"`
