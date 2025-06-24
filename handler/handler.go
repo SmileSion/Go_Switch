@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"edulimitrate/config"
 	"edulimitrate/middleware"
 	"edulimitrate/model"
 	"net/http"
@@ -8,11 +9,26 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var DecryptedSecretKey string
+
 type RegionRequest struct {
 	RegionCode string `json:"regioncode"`
 }
 
+func InitDecryptedSecret() {
+	key, err := middleware.Decrypt(config.Conf.Key.SecretKey)
+	if err != nil {
+		middleware.Logger.Fatalf("Failed to decrypt secretKey: %v", err)
+	}
+	DecryptedSecretKey = key
+}
+
 func OpenRegion(c *gin.Context) {
+	if secret := c.GetHeader("secretKey"); secret != DecryptedSecretKey {
+		middleware.Logger.Printf("[OpenRegion] unauthorized access, clientIP=%s", c.ClientIP())
+		c.JSON(http.StatusUnauthorized, gin.H{"code": 401, "msg": "unauthorized"})
+		return
+	}
 	var req RegionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		middleware.Logger.Printf("[OpenRegion] invalid json: %v, clientIP=%s", err, c.ClientIP())
@@ -38,6 +54,11 @@ func OpenRegion(c *gin.Context) {
 }
 
 func CloseRegion(c *gin.Context) {
+	if secret := c.GetHeader("secretKey"); secret != DecryptedSecretKey {
+		middleware.Logger.Printf("[OpenRegion] unauthorized access, clientIP=%s", c.ClientIP())
+		c.JSON(http.StatusUnauthorized, gin.H{"code": 401, "msg": "unauthorized"})
+		return
+	}
 	var req RegionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		middleware.Logger.Printf("[CloseRegion] invalid json: %v, clientIP=%s", err, c.ClientIP())

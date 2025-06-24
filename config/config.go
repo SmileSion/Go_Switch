@@ -32,11 +32,16 @@ type RedisConfig struct {
 	DB       int    `toml:"db"`
 }
 
+type KeyConfig struct {
+	SecretKey string `toml:"secret_key"`
+}
+
 type Config struct {
 	Server ServerConfig `toml:"server"`
 	Mysql  MysqlConfig  `toml:"mysql"`
 	Log    LogConfig    `toml:"log"`
 	Redis  RedisConfig  `toml:"redis"`
+	Key    KeyConfig    `toml:"key"`
 }
 
 var Conf Config

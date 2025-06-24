@@ -15,3 +15,6 @@ max_size = 50       # 单个文件最大大小（MB）
 max_backups = 10    # 最多保留旧文件数
 max_age = 7         # 最多保留天数
 compress = true     # 是否压缩
+
+[key]
+secret_key = "3XEmgpg+HXG4C98vehU1ODtSHbjUmQyb/LSc+2s/Q0ZncnTx2B/ZZg88k0XhVLViXOu35pNJiXgc8CwpauwJ2eWi2/Pep29QTc9JeWs8R48="

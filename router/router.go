@@ -11,7 +11,7 @@ func InitRouter() *gin.Engine {
 	r := gin.Default()
 
 	// 初始化日志
-	middleware.InitLogger("logs/track.log")  // 你可以用配置里的路径
+	middleware.InitLogger()  // 你可以用配置里的路径
 
 	// 使用日志中间件
 	r.Use(middleware.LogMiddleware())
