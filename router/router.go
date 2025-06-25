@@ -20,6 +20,7 @@ func InitRouter() *gin.Engine {
 	r.POST("/ratelimit/open", handler.OpenRegion)
 	r.POST("/ratelimit/close", handler.CloseRegion)
 	r.POST("/ratelimit/check", handler.CheckRegion)
+	r.POST("/ratelimit/setpromptwords", handler.UpdatePromptWords)
 
 	return r
 }

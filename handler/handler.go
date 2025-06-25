@@ -5,6 +5,7 @@ import (
 	"edulimitrate/middleware"
 	"edulimitrate/model"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,6 +15,10 @@ var DecryptedSecretKey string
 type RegionRequest struct {
 	RegionCode string `json:"regioncode"`
 }
+type PromptRequest struct {
+	Prompt string `json:"prompt"`
+}
+
 
 func InitDecryptedSecret() {
 	key, err := middleware.Decrypt(config.Conf.Key.SecretKey)
@@ -95,6 +100,45 @@ func CheckRegion(c *gin.Context) {
 		return
 	}
 
-	middleware.Logger.Printf("[CheckRegion] result: regioncode=%s, allowed=%v", req.RegionCode, exist)
-	c.JSON(http.StatusOK, gin.H{"code": 200, "allowed": exist})
+	prompt, err := model.GetPromptWords()
+	if err != nil {
+		prompt = "" // 出错就返回空，不影响主流程
+	}
+
+	middleware.Logger.Printf("[CheckRegion] result: regioncode=%s, allowed=%v，promptwors=%s;", req.RegionCode, exist,prompt)
+	c.JSON(http.StatusOK, gin.H{"code": 200, "allowed": exist, "promptwords": prompt})
+}
+
+func UpdatePromptWords(c *gin.Context) {
+	if secret := c.GetHeader("secretKey"); secret != DecryptedSecretKey {
+		middleware.Logger.Printf("[UpdatePromptWords] unauthorized access, clientIP=%s", c.ClientIP())
+		c.JSON(http.StatusUnauthorized, gin.H{"code": 401, "msg": "unauthorized"})
+		return
+	}
+
+	var req PromptRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		middleware.Logger.Printf("[UpdatePromptWords] invalid json: %v, clientIP=%s", err, c.ClientIP())
+		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "msg": "invalid json"})
+		return
+	}
+
+	// 写入 Redis
+	err := model.SetPromptWords(req.Prompt)
+	if err != nil {
+		middleware.Logger.Printf("[UpdatePromptWords] failed to set redis: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"code": 500, "msg": "redis write failed"})
+		return
+	}
+
+	// 写入本地文件
+	err = os.WriteFile("Promptwords", []byte(req.Prompt), 0644)
+	if err != nil {
+		middleware.Logger.Printf("[UpdatePromptWords] failed to write file: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"code": 500, "msg": "file write failed"})
+		return
+	}
+
+	middleware.Logger.Printf("[UpdatePromptWords] success. prompt updated.")
+	c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "prompt updated"})
 }
